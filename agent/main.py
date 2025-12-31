@@ -11,7 +11,9 @@ def main():
 
     graph = buildGraph()
     # We invoke the graph with the initial state
-    result = graph.invoke(GraphState(user_request="I want trending toys in France"))
+    result = graph.invoke(
+        GraphState(user_request="I want trending toys in USA for adhd kids")
+    )
 
     print("\n--- FINAL RESULT ---")
     print(result)

@@ -1,7 +1,7 @@
-from agent.prompts import EXTRACTOR_SYSTEM_PROMPT
+from agent.constants.prompts import EXTRACTOR_SYSTEM_PROMPT
 from agent.state import GraphState, SearchCriteria
 from langchain_core.messages import SystemMessage, HumanMessage
-from agent.model import model
+from agent.utils.model import model
 
 
 def extract_node(state: GraphState):

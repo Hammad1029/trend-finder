@@ -1,5 +1,7 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Literal, Optional
+
+from agent.constants.enums import Currencies, Platforms
 
 
 class SearchCriteria(BaseModel):
@@ -26,7 +28,7 @@ class SearchCriteria(BaseModel):
         description="Maximum price budget. 1000 if not specified.", default=1000
     )
     currency: str = Field(
-        description="The currency of the price range",
+        description="The currency of the price range.",
         default="",
     )
     vertical_category: str = Field(
@@ -42,15 +44,23 @@ class SearchCriteria(BaseModel):
 class ProductMetrics(BaseModel):
     """Raw data scraped from a single listing."""
 
-    title: str = ""
+    # product information
+    platform: Platforms = Platforms.UNKNOWN
+    unique_id: str = ""
     description: str = ""
-    price_current: float = 0
-    currency: str = ""
-    seller_name: str = ""  # e.g. "Walmart" vs "TinyShop"
-    listing_url: str = ""
+    price: float = 0
+    currency: Currencies = Currencies.UNKNOWN
     image_url: str = ""
-    rating: Optional[float] = None  # e.g. 4.5
-    review_count: Optional[int] = None  # e.g. 150
+    platform_category: str = ""
+    platform_region: str = ""
+
+    # score calculation
+    rating: float = 0
+    review_count: int = 0
+    sales_last_month: int = 0
+    search_ranking: int = 0
+    sponsored: bool = False
+    score: int = 0
 
 
 class ProductGroup(BaseModel):
