@@ -2,9 +2,10 @@ from pydantic import BaseModel, Field
 from typing import List, Literal, Optional
 
 from agent.constants.enums import Currencies, Platforms
+from agent.utils.cluster_analytics import ClusterAnalytics
 
 
-class SearchCriteria(BaseModel):
+class SearchCriteriaState(BaseModel):
     """
     Search parameters extracted from the user's request.
     """
@@ -35,14 +36,17 @@ class SearchCriteria(BaseModel):
         description="The broad category of the product (e.g., 'Electronics', 'Fashion').",
         default="",
     )
-    time_horizon: str = Field(
-        description="Trend timeframe. Defaults to 'past_12_months'.",
-        default="past_12_months",
+    time_horizon_in_months: int = Field(
+        description="Trend timeframe in months. Defaults to 12.",
+        default=12,
     )
 
 
-class ProductMetrics(BaseModel):
+class ProductMetricsState(BaseModel):
     """Raw data scraped from a single listing."""
+
+    # request info
+    keyword_searched: str = ""
 
     # product information
     platform: Platforms = Platforms.UNKNOWN
@@ -62,34 +66,34 @@ class ProductMetrics(BaseModel):
     sponsored: bool = False
     score: int = 0
 
+    # embedding
+    embedding: List[float] = []
 
-class ProductGroup(BaseModel):
+
+class ProductClustersState(BaseModel):
     """A cluster of similar products representing a market niche."""
 
-    group_id: str = ""  # Unique ID for the cluster
-    group_name: str = ""  # Generated name e.g. "Bamboo Suction Plates"
-    products: List[ProductMetrics] = []
+    label: int = 0
+    trend_keywords: List[str] = []
+    products: List[ProductMetricsState] = []
 
-    # Analysis Metrics (The "Jungle Scout" Logic)
-    seller_density: int = 0  # Count of unique sellers in this group
-    average_price: float = 0
-    trend_trajectory: str = ""  # "Rising", "Stable", "Declining"
-    opportunity_score: int = 0  # 1-10 Score
-
-    # Sourcing Info
-    wholesale_query: str = ""  # Optimization query for Alibaba
-    target_cogs: float = 0  # Target buy price (e.g. 30% of avg price)
+    # Analysis Metrics
+    analytics: ClusterAnalytics = ClusterAnalytics([])
 
 
 class GraphState(BaseModel):
     # 1. Input
+    request_id: int = 0
     user_request: str = ""  # The raw "I want to sell..." text
 
     # 2. Planning Phase
-    search_criteria: SearchCriteria = SearchCriteria()
+    search_criteria_id: int = 0
+    search_criteria: SearchCriteriaState = SearchCriteriaState()
 
     # 3. Execution Phase
-    scraped_products: List[ProductMetrics] = []  # Flat list of raw results
+    scraped_products_id: List[int] = []
+    scraped_products: List[ProductMetricsState] = []  # Flat list of raw results
 
     # 4. Analysis Phase
-    grouped_trends: List[ProductGroup] = []  # Final output structure
+    cluster_ids: List[int] = []
+    clusters: List[ProductClustersState] = []  # Final output structure

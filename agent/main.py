@@ -1,4 +1,5 @@
 # agent.py
+from db.init import get_db
 from dotenv import load_dotenv
 
 load_dotenv()

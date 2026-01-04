@@ -1,14 +1,15 @@
+from typing import List
 from agent.constants.enums import Currencies, Platforms
-from agent.state import ProductMetrics
+from agent.state import ProductMetricsState
 from apify_client import ApifyClient
 import os
 
-from agent.state import SearchCriteria
+from agent.state import SearchCriteriaState
 
 client = ApifyClient(os.getenv("APIFY_TOKEN"))
 
 
-def run_amazon_actor(criteria: SearchCriteria) -> list[ProductMetrics]:
+def run_amazon_actor(criteria: SearchCriteriaState) -> list[ProductMetricsState]:
     products = []
 
     for keyword in criteria.primary_keywords:
@@ -32,7 +33,9 @@ def run_amazon_actor(criteria: SearchCriteria) -> list[ProductMetrics]:
         run = client.actor("9GmEDf8sr9Jyb6b3X").call(run_input=run_input)
         if run is not None:
             iterator = client.dataset(run["defaultDatasetId"]).iterate_items()
-            products.extend(normalize_products(list(iterator), criteria.target_region))
+            products.extend(
+                normalize_products(list(iterator), criteria.target_region, keyword)
+            )
 
         if os.environ.get("ENV") == "development":
             break
@@ -41,8 +44,8 @@ def run_amazon_actor(criteria: SearchCriteria) -> list[ProductMetrics]:
 
 
 def normalize_products(
-    scraped_products: list[dict], region: str
-) -> list[ProductMetrics]:
+    scraped_products: list[dict], region: str, keyword: str
+) -> list[ProductMetricsState]:
     if scraped_products[0].get("statusCode") != 200:
         return []
 
@@ -73,7 +76,8 @@ def normalize_products(
             sales_last_month = 0
         sponsored = (product.get("sponsored", False)) or (product.get("prime", False))
 
-        normalized_product = ProductMetrics(
+        normalized_product = ProductMetricsState(
+            keyword_searched=keyword,
             platform=platform,
             unique_id=unique_id,
             description=description,
