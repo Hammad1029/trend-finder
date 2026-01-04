@@ -1,4 +1,85 @@
-[tool.pyright]
-typeCheckingMode = "standard"
-venvPath = "./"
-venv = "env"
+[tool.poetry]
+name = "trend-finder"
+version = "0.1.0"
+description = "AI-powered e-commerce trend analysis agent"
+authors = ["Hammad <hammad@example.com>"]
+readme = "README.md"
+license = "MIT"
+packages = [{ include = "trend_finder", from = "src" }]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+# Core
+python-dotenv = "^1.0.0"
+pydantic = "^2.0.0"
+pydantic-settings = "^2.0.0"
+
+# Database
+sqlalchemy = "^2.0.0"
+pgvector = "^0.2.0"
+psycopg2-binary = "^2.9.0"
+
+# LangChain / LangGraph
+langchain = "^0.3.0"
+langchain-openai = "^0.3.0"
+langgraph = "^0.4.0"
+
+# External APIs
+apify-client = "^1.6.0"
+dataforseo-client = "^2.0.0"
+
+# ML / Data
+scikit-learn = "^1.3.0"
+numpy = "^1.24.0"
+scipy = "^1.11.0"
+matplotlib = "^3.10.8"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"
+pytest-cov = "^4.1.0"
+mypy = "^1.5.0"
+ruff = "^0.1.0"
+black = "^23.9.0"
+
+[tool.poetry.scripts]
+trend-finder = "trend_finder.__main__:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # Pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line too long (handled by black)
+    "B008",  # do not perform function calls in argument defaults
+]
+
+[tool.ruff.isort]
+known-first-party = ["trend_finder"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v --cov=trend_finder --cov-report=term-missing"
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
