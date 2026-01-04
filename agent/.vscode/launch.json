@@ -5,7 +5,7 @@
             "name": "Trend Finder",
             "type": "debugpy",
             "request": "launch",
-            "module": "trend_finder",
+            "module": "main",
             "cwd": "${workspaceFolder}",
             "python": "${workspaceFolder}/.venv/bin/python",
             "env": {

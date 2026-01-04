@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """
-Main entry point for the Trend Finder Agent.
+Trend Finder Agent - Main entry point.
 
-This file provides backwards compatibility with the old structure.
-For the new structure, use: python -m trend_finder
+This agent analyzes e-commerce trends based on user requests.
 """
 
 from dotenv import load_dotenv
@@ -11,26 +10,50 @@ from dotenv import load_dotenv
 # Load environment variables first
 load_dotenv()
 
-# Import from new structure
-from trend_finder.core import build_graph, GraphState
-from trend_finder.database import init_db
+from core import build_graph, GraphState
+from database import init_db
 
 
 def main():
     """Run the trend finder agent."""
-    print("--- STARTING THE AGENT ---")
+    print("=" * 60)
+    print("TREND FINDER AGENT")
+    print("=" * 60)
 
-    # Initialize database tables
+    # Initialize database
     init_db()
 
-    # Build and run the graph
+    # Build the graph
     graph = build_graph()
-    result = graph.invoke(
-        GraphState(user_request="I want trending toys in USA for adhd kids")
-    )
 
-    print("\n--- FINAL RESULT ---")
-    print(result)
+    # Example request
+    initial_state = GraphState(user_request="I want trending toys in USA for adhd kids")
+
+    # Run the agent
+    print("\n--- STARTING THE AGENT ---\n")
+    result = graph.invoke(initial_state)
+
+    print("\n" + "=" * 60)
+    print("FINAL RESULT")
+    print("=" * 60)
+
+    # Pretty print results
+    clusters = result.get("clusters")
+    if clusters:
+        for cluster in clusters:
+            print(f"\n📦 Cluster {cluster.label}")
+            print(f"   Keywords: {', '.join(cluster.trend_keywords[:5])}")
+            print(f"   Products: {len(cluster.products)}")
+            if cluster.analytics:
+                analytics = cluster.analytics
+                print(f"   Avg Price: ${analytics.average_price:.2f}")
+                print(f"   Avg Rating: {analytics.average_rating:.1f}⭐")
+                if analytics.trend_analytics:
+                    trend = analytics.trend_analytics
+                    print(f"   Trend: {trend.label} (Score: {trend.final_score})")
+                    print(f"   {trend.explanation}")
+    else:
+        print("No clusters found.")
 
     return result
 
