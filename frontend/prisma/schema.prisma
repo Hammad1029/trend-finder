@@ -1,0 +1,119 @@
+// Prisma schema for TrendToy MVP
+// Translated from SQLAlchemy models in the Python backend
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  extensions = [vector]
+}
+
+/// User search request record
+model Request {
+  id          Int      @id @default(autoincrement())
+  userRequest String   @map("user_request") @db.VarChar(255)
+  createdAt   DateTime @default(now()) @map("created_at")
+  userId      String   @map("user_id")
+
+  // Relationships
+  searchCriteria  SearchCriteria?
+  productMetrics  ProductMetrics[]
+  productClusters ProductClusters[]
+
+  @@map("requests")
+}
+
+/// Extracted search parameters from user request
+model SearchCriteria {
+  id                  Int    @id @default(autoincrement())
+  primaryKeywords     String @map("primary_keywords") @db.VarChar(255)
+  negativeKeywords    String @map("negative_keywords") @db.VarChar(255)
+  targetRegion        String @map("target_region") @db.VarChar(10)
+  priceMin            Int    @map("price_min")
+  priceMax            Int    @map("price_max")
+  currency            String @db.VarChar(10)
+  verticalCategory    String @map("vertical_category") @db.VarChar(50)
+  timeHorizonInMonths Int    @map("time_horizon_in_months")
+
+  // Foreign key
+  requestId Int     @unique @map("request_id")
+  request   Request @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@map("search_criteria")
+}
+
+/// Scraped product metrics from e-commerce platforms
+model ProductMetrics {
+  id               Int    @id @default(autoincrement())
+  keywordSearched  String @map("keyword_searched") @db.VarChar(255)
+  platform         String @db.VarChar(50) // "Amazon", "Daraz"
+  uniqueId         String @map("unique_id") @db.VarChar(50) // ASIN or platform ID
+  description      String @db.VarChar(1000)
+  price            Float
+  currency         String @db.VarChar(10)
+  imageUrl         String @map("image_url") @db.VarChar(255)
+  platformCategory String @map("platform_category") @db.VarChar(50)
+  platformRegion   String @map("platform_region") @db.VarChar(10)
+
+  // Metrics
+  rating         Float
+  reviewCount    Int     @map("review_count")
+  salesLastMonth Int     @map("sales_last_month")
+  searchRanking  Int     @map("search_ranking")
+  sponsored      Boolean
+  score          Float // Individual product trend score
+
+  // Vector Embedding (1536 dimensions for OpenAI embeddings)
+  // Using Unsupported type for pgvector - DO NOT fetch this column in normal queries!
+  embedding Unsupported("vector(1536)")?
+
+  // Foreign Keys
+  requestId Int     @map("request_id")
+  request   Request @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  clusterId Int?             @map("cluster_id")
+  cluster   ProductClusters? @relation(fields: [clusterId], references: [id], onDelete: SetNull)
+
+  @@map("product_metrics")
+}
+
+/// Grouped trending products (clusters from ML algorithm)
+model ProductClusters {
+  id    Int @id @default(autoincrement())
+  label Int // Cluster ID from ML algorithm
+
+  // Trend Info
+  trendKeywords        String[] @map("trend_keywords") // Array of keywords
+  trendFinalScore      Float    @map("trend_final_score") // 0-10 composite score
+  trendLabel           String   @map("trend_label") @db.VarChar(50) // "STRONG UPWARD", "EMERGING", etc.
+  trendExplanation     String   @map("trend_explanation") @db.VarChar(1000)
+  trendSearchScore     Float    @map("trend_search_score") // Google Trends component
+  trendMarketScore     Float    @map("trend_market_score") // BSR/Reviews component
+  trendSlope           Float    @map("trend_slope") // +/- trend direction
+  trendVolatility      Float    @map("trend_volatility")
+  trendSalesVolume     Int      @map("trend_sales_volume")
+  trendSaturationRatio Float    @map("trend_saturation_ratio")
+
+  // Cluster Analytics
+  clusterSize           Int   @map("cluster_size")
+  minPrice              Float @map("min_price")
+  maxPrice              Float @map("max_price")
+  averagePrice          Float @map("average_price")
+  averageSalesLastMonth Int   @map("average_sales_last_month")
+  averageRating         Float @map("average_rating")
+  averageReviewCount    Int   @map("average_review_count")
+  averageSearchRanking  Int   @map("average_search_ranking")
+  averageProductScore   Float @map("average_product_score")
+
+  // Foreign Key
+  requestId Int     @map("request_id")
+  request   Request @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  // Relationships
+  productMetrics ProductMetrics[]
+
+  @@map("product_clusters")
+}
