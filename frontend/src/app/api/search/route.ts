@@ -38,22 +38,22 @@ export async function POST(request: NextRequest) {
         const { query } = validationResult.data;
 
         // Create request record in database
-        const searchRequest = await prisma.request.create({
-            data: {
-                userRequest: query,
-                userId: user.id,
-            },
-        });
+        // const searchRequest = await prisma.request.create({
+        //     data: {
+        //         userRequest: query,
+        //         userId: user.id,
+        //     },
+        // });
 
         // Forward request to Python backend (if available)
         const pythonBackendUrl = process.env.PYTHON_BACKEND_URL;
+        let res;
         if (pythonBackendUrl) {
             try {
-                await fetch(`${pythonBackendUrl}/search`, {
+                res = await fetch(`${pythonBackendUrl}/search`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                        request_id: searchRequest.id,
                         query,
                         user_id: user.id,
                     }),
@@ -64,8 +64,9 @@ export async function POST(request: NextRequest) {
             }
         }
 
+        const jsonRes = await res?.json()
         return NextResponse.json({
-            requestId: searchRequest.id,
+            requestId: jsonRes?.requestId,
             status: "processing",
         });
     } catch (error) {
